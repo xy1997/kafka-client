@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TopicConfigResponse {
+public class ConfigResponse {
 
     private String name;
 

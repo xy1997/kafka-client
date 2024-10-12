@@ -5,10 +5,9 @@ import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.request.ValidationGroup;
 import cn.net.explorer.domain.request.kafka.ConfigRequest;
 import cn.net.explorer.domain.response.ApiResponse;
-import cn.net.explorer.domain.response.kafka.TopicConfigResponse;
+import cn.net.explorer.domain.response.kafka.ConfigResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
-import org.apache.kafka.common.config.ConfigResource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,9 +31,9 @@ public class ConfigController {
      * {"brokerId":1,"name":"topic-24101201","type":"TOPIC"}
      */
     @PostMapping("/describeConfigs")
-    public ApiResponse<List<TopicConfigResponse>> describeTopicConfigs(@RequestBody @Validated(ValidationGroup.select.class) ConfigRequest request) {
+    public ApiResponse<List<ConfigResponse>> describeTopicConfigs(@RequestBody @Validated(ValidationGroup.select.class) ConfigRequest request) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
-        List<TopicConfigResponse> configResponses = kafkaConnector.describeConfigs(brokerInfo, request.getName(), request.getType());
+        List<ConfigResponse> configResponses = kafkaConnector.describeConfigs(brokerInfo, request.getName(), request.getType());
         return ApiResponse.ok(configResponses);
     }
 

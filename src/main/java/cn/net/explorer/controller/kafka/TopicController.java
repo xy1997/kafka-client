@@ -3,15 +3,12 @@ package cn.net.explorer.controller.kafka;
 import cn.net.explorer.connector.KafkaConnector;
 import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.request.ValidationGroup;
-import cn.net.explorer.domain.request.kafka.ConfigRequest;
 import cn.net.explorer.domain.request.kafka.TopicRequest;
 import cn.net.explorer.domain.response.ApiResponse;
-import cn.net.explorer.domain.response.kafka.TopicConfigResponse;
+import cn.net.explorer.domain.response.kafka.TopicPartitionResponse;
 import cn.net.explorer.domain.response.kafka.TopicResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
-import com.alibaba.fastjson.JSON;
-import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +34,12 @@ public class TopicController {
         return ApiResponse.ok(topicList);
     }
 
+    @GetMapping("/describeTopics")
+    public ApiResponse<TopicResponse> describeTopics(@NotEmpty String brokerId, @NotEmpty String topicName) {
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        return ApiResponse.ok(kafkaConnector.describeTopics(brokerInfo, topicName));
+    }
+
     /**
      * {
      * "brokerId": 1,
@@ -55,7 +58,6 @@ public class TopicController {
         return ApiResponse.ok();
     }
 
-
     /**
      * {
      * "brokerId": 1,
@@ -68,5 +70,6 @@ public class TopicController {
         kafkaConnector.deleteTopic(brokerInfo, request.getTopicName());
         return ApiResponse.ok();
     }
+
 
 }

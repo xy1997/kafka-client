@@ -1,6 +1,6 @@
 package cn.net.explorer.controller.kafka;
 
-import cn.net.explorer.domain.request.BrokerRequest;
+import cn.net.explorer.domain.request.kafka.BrokerRequest;
 import cn.net.explorer.domain.response.ApiResponse;
 import cn.net.explorer.service.BrokerService;
 import org.springframework.web.bind.annotation.PostMapping;

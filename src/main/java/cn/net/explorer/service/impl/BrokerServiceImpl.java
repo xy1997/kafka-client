@@ -5,7 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.socket.SocketUtil;
 import cn.net.explorer.connector.KafkaConnector;
 import cn.net.explorer.domain.eneity.BrokerInfo;
-import cn.net.explorer.domain.request.BrokerRequest;
+import cn.net.explorer.domain.request.kafka.BrokerRequest;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.mapper.BrokerMapper;
 import cn.net.explorer.service.BrokerService;

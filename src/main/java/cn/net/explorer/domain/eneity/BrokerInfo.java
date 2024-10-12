@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @TableName(value = "broker_info")
 @Data
@@ -26,5 +27,5 @@ public class BrokerInfo implements Serializable {
 
     private String remark;
 
-    private LocalDateTime createdTime;
+    private Date createdTime;
 }

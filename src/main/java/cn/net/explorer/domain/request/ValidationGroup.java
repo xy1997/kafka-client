@@ -5,4 +5,7 @@ public interface ValidationGroup {
     interface save {}
 
     interface update {}
+
+    interface delete{}
+
 }

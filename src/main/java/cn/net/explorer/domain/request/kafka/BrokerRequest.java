@@ -1,4 +1,4 @@
-package cn.net.explorer.domain.request;
+package cn.net.explorer.domain.request.kafka;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -6,8 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 import javax.validation.constraints.NotEmpty;
 
 @Data
-
 public class BrokerRequest {
+
+    private Integer id;
 
     @NotEmpty(message = "broker名称不能为空")
     private String name;

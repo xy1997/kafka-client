@@ -1019,3 +1019,17 @@ Caused by: org.apache.kafka.common.errors.TimeoutException: Timed out waiting to
 2024-10-12 11:32:37.608  INFO 25848 [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
 2024-10-12 11:32:37.608  INFO 25848 [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
 2024-10-12 11:32:37.608  INFO 25848 [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 0 ms
+2024-10-12 11:43:28.739  INFO 28636 [           main] cn.net.explorer.ExplorerApplication      : Starting ExplorerApplication using Java 1.8.0_121 on root with PID 28636 (E:\workspace\offset-explorer\target\classes started by 14867 in E:\workspace\offset-explorer)
+2024-10-12 11:43:28.742  INFO 28636 [           main] cn.net.explorer.ExplorerApplication      : No active profile set, falling back to 1 default profile: "default"
+2024-10-12 11:43:29.634  INFO 28636 [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2024-10-12 11:43:29.640  INFO 28636 [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2024-10-12 11:43:29.641  INFO 28636 [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.71]
+2024-10-12 11:43:29.730  INFO 28636 [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2024-10-12 11:43:29.730  INFO 28636 [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 945 ms
+2024-10-12 11:43:29.899  INFO 28636 [           main] c.a.d.s.b.a.DruidDataSourceAutoConfigure : Init DruidDataSource
+2024-10-12 11:43:30.103  INFO 28636 [           main] com.alibaba.druid.pool.DruidDataSource   : {dataSource-1} inited
+2024-10-12 11:43:31.611  INFO 28636 [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2024-10-12 11:43:31.627  INFO 28636 [           main] cn.net.explorer.ExplorerApplication      : Started ExplorerApplication in 3.374 seconds (JVM running for 4.482)
+2024-10-12 11:43:39.426  INFO 28636 [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2024-10-12 11:43:39.426  INFO 28636 [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2024-10-12 11:43:39.427  INFO 28636 [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms

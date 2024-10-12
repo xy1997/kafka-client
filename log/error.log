@@ -1026,3 +1026,4 @@ Caused by: org.sqlite.SQLiteException: [SQLITE_CONSTRAINT_NOTNULL] A NOT NULL co
 	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:427)
 	... 65 more
 
+2024-10-12 11:43:29.980 ERROR 28636 [           main] com.alibaba.druid.pool.DruidDataSource   : testWhileIdle is true, validationQuery not set

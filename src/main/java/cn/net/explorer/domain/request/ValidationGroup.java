@@ -8,4 +8,5 @@ public interface ValidationGroup {
 
     interface delete{}
 
+    interface select{}
 }

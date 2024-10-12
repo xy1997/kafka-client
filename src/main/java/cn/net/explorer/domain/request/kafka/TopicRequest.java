@@ -12,10 +12,10 @@ import java.util.Map;
 @Data
 public class TopicRequest {
 
-    @NotNull(message = "brokerId 不能为空", groups = {ValidationGroup.save.class, ValidationGroup.delete.class})
+    @NotNull(message = "brokerId 不能为空", groups = {ValidationGroup.save.class, ValidationGroup.delete.class, ValidationGroup.select.class})
     private Integer brokerId;
 
-    @NotEmpty(message = "topicName 不能为空", groups = {ValidationGroup.save.class, ValidationGroup.delete.class})
+    @NotEmpty(message = "topicName 不能为空", groups = {ValidationGroup.save.class, ValidationGroup.delete.class, ValidationGroup.select.class})
     private String topicName;
 
     /**

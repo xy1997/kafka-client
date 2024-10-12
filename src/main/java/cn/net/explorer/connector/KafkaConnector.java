@@ -2,18 +2,17 @@ package cn.net.explorer.connector;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.net.explorer.domain.eneity.BrokerInfo;
+import cn.net.explorer.domain.response.kafka.TopicConfigResponse;
 import cn.net.explorer.domain.response.kafka.TopicResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.util.ThrowableUtil;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,6 +98,72 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#deleteTopic:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("topic删除异常:" + e.getMessage());
+        } finally {
+            client.close();
+        }
+    }
+
+    /**
+     * 获取topic、broker的配置信息
+     *
+     * @param broker kafka服务
+     * @param type   类型  (broker,topic)
+     * @param name   名称  (broker,topic)
+     */
+    public List<TopicConfigResponse> describeConfigs(BrokerInfo broker, String name, ConfigResource.Type type) {
+        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
+        try {
+            ConfigResource configResource = new ConfigResource(type, name);
+            DescribeConfigsResult configsResult = client.describeConfigs(Collections.singletonList(configResource));
+            Map<ConfigResource, Config> configMap = configsResult.all().get(5000, TimeUnit.MILLISECONDS);
+
+            return configMap.values().stream()
+                    .flatMap(item -> item.entries().stream()
+                            .map(config -> new TopicConfigResponse(
+                                    config.name(),
+                                    config.value(),
+                                    config.source(),
+                                    config.isSensitive(),
+                                    config.isReadOnly(),
+                                    config.synonyms(),
+                                    config.type(),
+                                    config.documentation())))
+                    .collect(Collectors.toList());
+        } catch (Throwable e) {
+            logger.error("error: KafkaConnector#describeConfigs:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("topic获取配置异常:" + e.getMessage());
+        } finally {
+            client.close();
+        }
+    }
+
+    /**
+     * 新增、修改 broker、topic的配置
+     *  @param broker    kafka服务
+     * @param name      名称  (broker,topic)
+     * @param type      类型  (broker,topic)
+     * @param opType    新增修改、删除配置
+     * @param configMap 配置详情
+     * @return
+     */
+    public void incrementalAlterConfigs(BrokerInfo broker, String name, ConfigResource.Type type, AlterConfigOp.OpType opType, Map<String, String> configMap) {
+        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
+        try {
+            ConfigResource resource = new ConfigResource(type, name);
+            List<AlterConfigOp> alterConfigOps = configMap.keySet().stream().map(key -> {
+                ConfigEntry configEntry = new ConfigEntry(key, configMap.get(key));
+                return new AlterConfigOp(configEntry, opType);
+            }).collect(Collectors.toList());
+
+            // 将配置应用到资源
+            Map<ConfigResource, Collection<AlterConfigOp>> configs = new HashMap<>();
+            configs.put(resource, alterConfigOps);
+            client.incrementalAlterConfigs(configs).all().get();
+        } catch (Throwable e) {
+            logger.error("error: KafkaConnector#incrementalAlterConfigs:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("topic获取配置异常:" + e.getMessage());
         } finally {
             client.close();
         }

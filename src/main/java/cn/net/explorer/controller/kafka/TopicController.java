@@ -28,14 +28,16 @@ public class TopicController {
     private KafkaConnector kafkaConnector;
 
     @GetMapping("/listTopic")
-    public ApiResponse<List<TopicResponse>> listTopic(@NotEmpty String brokerId) {
+    @Validated
+    public ApiResponse<List<TopicResponse>> listTopic(@RequestParam @NotEmpty String brokerId) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
         List<TopicResponse> topicList = kafkaConnector.listTopic(brokerInfo);
         return ApiResponse.ok(topicList);
     }
 
     @GetMapping("/describeTopics")
-    public ApiResponse<TopicResponse> describeTopics(@NotEmpty String brokerId, @NotEmpty String topicName) {
+    @Validated
+    public ApiResponse<TopicResponse> describeTopics(@RequestParam @NotEmpty String brokerId, @RequestParam @NotEmpty String topicName) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
         return ApiResponse.ok(kafkaConnector.describeTopics(brokerInfo, topicName));
     }

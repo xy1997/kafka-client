@@ -3,11 +3,13 @@ package cn.net.explorer.connector;
 import cn.hutool.core.util.ObjectUtil;
 import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.response.kafka.ConfigResponse;
+import cn.net.explorer.domain.response.kafka.ConsumerGroupResponse;
 import cn.net.explorer.domain.response.kafka.TopicPartitionResponse;
 import cn.net.explorer.domain.response.kafka.TopicResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.util.ThrowableUtil;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -151,6 +154,44 @@ public class KafkaConnector {
         } finally {
             client.close();
         }
+    }
+
+    /**
+     * 获取消费者组信息
+     *
+     * @param broker kafka服务
+     */
+    public List<ConsumerGroupResponse> listConsumerGroups(BrokerInfo broker) {
+        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
+
+        try {
+            // 获取所有消费者组
+            ListConsumerGroupsResult result = client.listConsumerGroups();
+            // 同步获取消费者组列表
+            Collection<ConsumerGroupListing> consumerGroups = result.all().get();
+
+            //查询消费者组的详情
+            DescribeConsumerGroupsResult describeResult = client.describeConsumerGroups(consumerGroups.stream().map(ConsumerGroupListing::groupId).collect(Collectors.toList()));
+            Map<String, ConsumerGroupDescription> consumerGroupDescriptionMap = describeResult.all().get();
+
+            return consumerGroups.stream().map(item -> {
+                ConsumerGroupDescription description = consumerGroupDescriptionMap.get(item.groupId());
+                List<ConsumerGroupResponse.Member> memberList = description.members().stream().map(member -> new ConsumerGroupResponse.Member(member.consumerId(), member.clientId(), member.host())).collect(Collectors.toList());
+
+                ConsumerGroupResponse groupResponse = new ConsumerGroupResponse();
+                groupResponse.setGroupId(item.groupId());
+                groupResponse.setState(item.state().orElse(ConsumerGroupState.parse("Unknown")).name());
+                groupResponse.setMembers(memberList);
+                return groupResponse;
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("error: KafkaConnector#listConsumerGroups:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("获取消费者组信息异常:" + e.getMessage());
+        } finally {
+            client.close();
+        }
+
     }
 
     /**

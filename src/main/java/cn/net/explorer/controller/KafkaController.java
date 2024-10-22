@@ -2,6 +2,8 @@ package cn.net.explorer.controller;
 
 import com.alibaba.fastjson.JSON;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.Node;
@@ -9,6 +11,7 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,9 +20,40 @@ import java.util.stream.Stream;
 public class KafkaController {
 
     public static void main(String[] args) throws Exception {
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "192.168.0.71:9092");
+        props.setProperty("auto.offset.reset", "earliest");
+        props.setProperty("max.partition.fetch.bytes","1048576");
+        props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+
+        TopicPartition partition0 = new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 0);
+        List<TopicPartition> partitions = Stream.of(partition0).collect(Collectors.toList());
+
+       // consumer.assign(partitions);
+
+        Map<TopicPartition, Long> beginMap = consumer.beginningOffsets(partitions);
+        Map<TopicPartition, Long> endMap = consumer.endOffsets(partitions);
+        System.out.println(JSON.toJSONString(beginMap));
+        System.out.println(JSON.toJSONString(endMap));
 
 
-        // System.out.println("结束消费"+(System.currentTimeMillis() - startMillis));
+/*        // 不断从指定的分区中拉取消息
+        try {
+            while (true) {
+                // 从分区中拉取消息（每次最多等待 100 毫秒）
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+                // 处理拉取到的消息
+                for (ConsumerRecord<String, String> record : records) {
+                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key());
+                }
+            }
+        } finally {
+            // 关闭消费者
+            consumer.close();
+        }*/
+
     }
 
     public static void count() throws Exception {

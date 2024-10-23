@@ -30,4 +30,11 @@ public class ConsumerController {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
         return ApiResponse.ok(kafkaConnector.listConsumerGroups(brokerInfo));
     }
+
+    @GetMapping("/listTopicInfoOfConsumer")
+    @Validated
+    public ApiResponse<?> listTopicInfoOfConsumer(@RequestParam @NotEmpty String brokerId, @RequestParam @NotEmpty String groupId) {
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        return ApiResponse.ok(kafkaConnector.listTopicInfoOfConsumer(brokerInfo, groupId));
+    }
 }

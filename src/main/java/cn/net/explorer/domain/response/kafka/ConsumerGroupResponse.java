@@ -7,10 +7,19 @@ import java.util.List;
 @Data
 public class ConsumerGroupResponse {
 
+    /**
+     * 消费者组ID
+     */
     private String groupId;
 
+    /**
+     * 状态
+     */
     private String state;
 
+    /**
+     * 消费者组的节点信息
+     */
     private List<Member> members;
 
     public ConsumerGroupResponse(){}

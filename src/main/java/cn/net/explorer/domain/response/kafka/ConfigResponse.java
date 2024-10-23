@@ -12,19 +12,28 @@ import java.util.List;
 @NoArgsConstructor
 public class ConfigResponse {
 
+    /**
+     * 配置 key
+     */
     private String name;
 
+    /**
+     * 配置value
+     */
     private String value;
 
-    private  ConfigEntry.ConfigSource source;
+    /**
+     * 配置类型   BROKER、TOPIC等
+     */
+    private ConfigEntry.ConfigSource source;
 
-    private  boolean isSensitive;
+    private boolean isSensitive;
 
-    private  boolean isReadOnly;
+    private boolean isReadOnly;
 
-    private  List<ConfigEntry.ConfigSynonym> synonyms;
+    private List<ConfigEntry.ConfigSynonym> synonyms;
 
-    private  ConfigEntry.ConfigType type;
+    private ConfigEntry.ConfigType type;
 
-    private  String documentation;
+    private String documentation;
 }

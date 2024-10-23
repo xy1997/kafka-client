@@ -8,17 +8,21 @@ import cn.net.explorer.domain.response.kafka.TopicPartitionResponse;
 import cn.net.explorer.domain.response.kafka.TopicResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.util.ThrowableUtil;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
-import org.apache.kafka.common.TopicPartitionInfo;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -173,7 +177,6 @@ public class KafkaConnector {
             //查询消费者组的详情
             DescribeConsumerGroupsResult describeResult = client.describeConsumerGroups(consumerGroups.stream().map(ConsumerGroupListing::groupId).collect(Collectors.toList()));
             Map<String, ConsumerGroupDescription> consumerGroupDescriptionMap = describeResult.all().get();
-
             return consumerGroups.stream().map(item -> {
                 ConsumerGroupDescription description = consumerGroupDescriptionMap.get(item.groupId());
                 List<ConsumerGroupResponse.Member> memberList = description.members().stream().map(member -> new ConsumerGroupResponse.Member(member.consumerId(), member.clientId(), member.host())).collect(Collectors.toList());
@@ -259,5 +262,70 @@ public class KafkaConnector {
         } finally {
             client.close();
         }
+    }
+
+    public List<JSONObject> listTopicInfoOfConsumer(BrokerInfo brokerInfo, String groupId) {
+        AdminClient adminClient = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword());
+        try {
+            //获取消费者组在各个Topic分区的偏移量信息
+            Map<TopicPartition, OffsetAndMetadata> consumerGroupOffsetMap = adminClient.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata().get(5, TimeUnit.SECONDS);
+
+            //获取到指定的消费者组groupId的详情
+            DescribeConsumerGroupsResult consumerGroupsResult = adminClient.describeConsumerGroups(Collections.singletonList(groupId));
+            ConsumerGroupDescription consumerGroup = consumerGroupsResult.all().get(5, TimeUnit.SECONDS).get(groupId);
+
+            // 获取订阅的主题信息
+            List<TopicPartition> topicPartitions = consumerGroup.members().stream()
+                    .flatMap(member -> member.assignment().topicPartitions().stream())
+                    .map(item -> new TopicPartition(item.topic(), item.partition()))
+                    .collect(Collectors.toList());
+            //获取消费者实例
+            KafkaConsumer<String, String> consumer = getConsumer(brokerInfo, "earliest", groupId);
+            //主题的开始、结束的偏移量
+            Map<TopicPartition, Long> beginOffsetMap = consumer.beginningOffsets(topicPartitions);
+            Map<TopicPartition, Long> endOffsetMap = consumer.endOffsets(topicPartitions);
+
+            return topicPartitions.stream().map(topicPartition -> {
+                JSONObject result = new JSONObject();
+                //主题、分区
+                result.put("topic", topicPartition.topic());
+                result.put("partition", topicPartition.partition());
+                //当前消费者组 对分区提交的偏移量信息
+                OffsetAndMetadata offsetAndMetadata = consumerGroupOffsetMap.get(topicPartition);
+                result.put("offset", offsetAndMetadata.offset());
+                //分区的开始偏移量 和 最后偏移量
+                result.put("beginOffset", beginOffsetMap.get(topicPartition));
+                result.put("endOffset", endOffsetMap.get(topicPartition));
+                result.put("lag", endOffsetMap.get(topicPartition) - offsetAndMetadata.offset());
+                return result;
+            }).collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("error: KafkaConnector#listTopicInfoOfConsumer:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("获取消费者主题偏移量异常:" + e.getMessage());
+        } finally {
+            adminClient.close();
+        }
+    }
+
+    /**
+     * 获取消费者信息
+     *
+     * @param brokerInfo  broker 信息
+     * @param offsetReset earliest 从TOPIC分区内的头消费、latest 从TOPIC分区内的尾消费
+     */
+    public KafkaConsumer<String, String> getConsumer(BrokerInfo brokerInfo, String offsetReset, String groupId) {
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", brokerInfo.getBroker());
+        props.setProperty("auto.offset.reset", offsetReset);
+        props.setProperty("max.partition.fetch.bytes", "1048576");
+        props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+
+        if (StringUtils.isNotEmpty(groupId)) {
+            props.setProperty("group.id", groupId);
+        }
+        return new KafkaConsumer<>(props);
     }
 }

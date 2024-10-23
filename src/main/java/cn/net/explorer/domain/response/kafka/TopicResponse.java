@@ -11,10 +11,19 @@ import java.util.List;
 @NoArgsConstructor
 public class TopicResponse {
 
+    /**
+     * 主题名称
+     */
     private String name;
 
+    /**
+     * 是否是内部主题
+     */
     private Boolean isInternal;
 
+    /**
+     * 主题所在分区信息
+     */
     List<TopicPartitionResponse> partitions;
 
 

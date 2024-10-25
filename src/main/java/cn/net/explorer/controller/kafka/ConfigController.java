@@ -5,7 +5,7 @@ import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.request.ValidationGroup;
 import cn.net.explorer.domain.request.kafka.ConfigRequest;
 import cn.net.explorer.domain.response.ApiResponse;
-import cn.net.explorer.domain.response.kafka.ConfigResponse;
+import cn.net.explorer.domain.dto.kafka.ConfigDto;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
 import org.springframework.validation.annotation.Validated;
@@ -31,9 +31,9 @@ public class ConfigController {
      * {"brokerId":1,"name":"topic-24101201","type":"TOPIC"}
      */
     @PostMapping("/describeConfigs")
-    public ApiResponse<List<ConfigResponse>> describeTopicConfigs(@RequestBody @Validated(ValidationGroup.select.class) ConfigRequest request) {
+    public ApiResponse<List<ConfigDto>> describeTopicConfigs(@RequestBody @Validated(ValidationGroup.select.class) ConfigRequest request) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
-        List<ConfigResponse> configResponses = kafkaConnector.describeConfigs(brokerInfo, request.getName(), request.getType());
+        List<ConfigDto> configResponses = kafkaConnector.describeConfigs(brokerInfo, request.getName(), request.getType());
         return ApiResponse.ok(configResponses);
     }
 
@@ -47,6 +47,5 @@ public class ConfigController {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
         kafkaConnector.incrementalAlterConfigs(brokerInfo, request.getName(), request.getType(), request.getOpType(), request.getConfigs());
         return ApiResponse.ok();
-
     }
 }

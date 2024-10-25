@@ -1,10 +1,13 @@
 package cn.net.explorer.domain.response;
 
 import cn.hutool.http.HttpStatus;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.omg.CORBA.Object;
 
 import java.util.List;
 
@@ -14,36 +17,30 @@ import java.util.List;
 @AllArgsConstructor
 public class ApiPageResponse<T> {
 
-
     /**
      * 响应code码
      */
     private Integer code;
 
 
-
-    private List<T> data;
+    private ApiPageData<T> data;
 
     /**
      * 总条数
      */
-    private Long count;
+    private String msg;
 
-    /**
-     * 分页条数
-     */
-  //  private Long pageSize;
 
-    /**
-     * 当前页
-     */
-    //private Long pageNum;
+    public static <T> ApiPageResponse<T> page(IPage<T> page) {
+        return ApiPageResponse.<T>builder().data(new ApiPageData<T>(page.getRecords(),page.getTotal())).code(HttpStatus.HTTP_OK).build();
+    }
 
-    /**
-     * 分页
-     */
-    public static <T> ApiPageResponse<T> page(Long count, List<T> data) {
-        //构建page信息
-        return ApiPageResponse.<T>builder().data(data).count(count).code(HttpStatus.HTTP_OK).build();
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    static class ApiPageData<T>{
+        private List<T> list;
+        private Long total;
     }
 }

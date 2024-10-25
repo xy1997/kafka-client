@@ -1,11 +1,9 @@
 package cn.net.explorer.connector;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.net.explorer.domain.dto.kafka.*;
 import cn.net.explorer.domain.eneity.BrokerInfo;
-import cn.net.explorer.domain.response.kafka.ConfigResponse;
-import cn.net.explorer.domain.response.kafka.ConsumerGroupResponse;
-import cn.net.explorer.domain.response.kafka.TopicPartitionResponse;
-import cn.net.explorer.domain.response.kafka.TopicResponse;
+import cn.net.explorer.domain.response.kafka.*;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.util.ThrowableUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -15,7 +13,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
@@ -47,8 +44,9 @@ public class KafkaConnector {
     /**
      * 获取主题列表
      */
-    public List<TopicResponse> listTopic(BrokerInfo broker) {
+    public List<TopicDto> listTopic(BrokerInfo broker) {
         AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
+
         ListTopicsOptions topicsOptions = new ListTopicsOptions();
         //内部topic
         topicsOptions.listInternal(true);
@@ -56,7 +54,7 @@ public class KafkaConnector {
 
         try {
             Collection<TopicListing> topics = topicsResult.listings().get(3000, TimeUnit.MILLISECONDS);
-            return topics.stream().map(item -> new TopicResponse(item.name(), item.isInternal(), null)).collect(Collectors.toList());
+            return topics.stream().map(item -> new TopicDto(item.name(), item.isInternal(), null)).collect(Collectors.toList());
         } catch (Throwable e) {
             logger.error("error: KafkaConnector#listTopic:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
@@ -76,8 +74,7 @@ public class KafkaConnector {
      * @param configs     主题的相关配置
      */
     public void createTopic(BrokerInfo broker, String topic, Integer partition, Short replication, Map<String, String> configs) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
-        try {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             NewTopic newTopic = new NewTopic(topic, partition, replication)
                     .configs(configs);
 
@@ -87,8 +84,6 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#createTopic:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("topic创建异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
     }
 
@@ -100,53 +95,49 @@ public class KafkaConnector {
      * @param topic  topic名称
      */
     public void deleteTopic(BrokerInfo broker, String topic) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
-        try {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             DeleteTopicsResult topicsResult = client.deleteTopics(Stream.of(topic).collect(Collectors.toList()));
             topicsResult.all().get(5000, TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             logger.error("error: KafkaConnector#deleteTopic:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("topic删除异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
     }
 
 
-    public TopicResponse describeTopics(BrokerInfo broker, String topic) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
-        try {
+    public TopicDto describeTopics(BrokerInfo broker, String topic) {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             DescribeTopicsResult topicsResult = client.describeTopics(Collections.singletonList(topic));
             Map<String, TopicDescription> topicDescriptionMap = topicsResult.all().get(5000, TimeUnit.MILLISECONDS);
             TopicDescription topicDescription = topicDescriptionMap.get(topic);
 
-            List<TopicPartitionResponse> partitions = topicDescription.partitions().stream().map(item -> {
-                TopicPartitionResponse partition = new TopicPartitionResponse();
+            List<TopicPartitionDto> partitions = topicDescription.partitions().stream().map(item -> {
+                TopicPartitionDto partition = new TopicPartitionDto();
 
                 //分区号
                 partition.setPartition(item.partition());
 
                 //分区leader节点
                 Node leader = item.leader();
-                TopicPartitionResponse.Node leaderNode = new TopicPartitionResponse.Node(leader.id(), leader.host(), leader.port());
+                TopicPartitionDto.Node leaderNode = new TopicPartitionDto.Node(leader.id(), leader.host(), leader.port());
                 partition.setLeader(leaderNode);
 
                 //分区副本节点
-                List<TopicPartitionResponse.Node> replicasNodes = item.replicas().stream().map(replica ->
-                        new TopicPartitionResponse.Node(replica.id(), replica.host(), replica.port())
+                List<TopicPartitionDto.Node> replicasNodes = item.replicas().stream().map(replica ->
+                        new TopicPartitionDto.Node(replica.id(), replica.host(), replica.port())
                 ).collect(Collectors.toList());
                 partition.setReplicas(replicasNodes);
 
                 //分区与leader进行同步的副本节点
-                List<TopicPartitionResponse.Node> isrNode = item.isr().stream().map(isr ->
-                        new TopicPartitionResponse.Node(isr.id(), isr.host(), isr.port())).collect(Collectors.toList());
+                List<TopicPartitionDto.Node> isrNode = item.isr().stream().map(isr ->
+                        new TopicPartitionDto.Node(isr.id(), isr.host(), isr.port())).collect(Collectors.toList());
                 partition.setIsr(isrNode);
 
                 return partition;
             }).collect(Collectors.toList());
 
-            TopicResponse topicResponse = new TopicResponse();
+            TopicDto topicResponse = new TopicDto();
             topicResponse.setName(topicDescription.name());
             topicResponse.setIsInternal(topicDescription.isInternal());
             topicResponse.setPartitions(partitions);
@@ -155,8 +146,6 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#listTopicPartitions:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("topic查看分区异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
     }
 
@@ -165,10 +154,9 @@ public class KafkaConnector {
      *
      * @param broker kafka服务
      */
-    public List<ConsumerGroupResponse> listConsumerGroups(BrokerInfo broker) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
+    public List<ConsumerGroupDto> listConsumerGroups(BrokerInfo broker) {
 
-        try {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             // 获取所有消费者组
             ListConsumerGroupsResult result = client.listConsumerGroups();
             // 同步获取消费者组列表
@@ -179,9 +167,9 @@ public class KafkaConnector {
             Map<String, ConsumerGroupDescription> consumerGroupDescriptionMap = describeResult.all().get();
             return consumerGroups.stream().map(item -> {
                 ConsumerGroupDescription description = consumerGroupDescriptionMap.get(item.groupId());
-                List<ConsumerGroupResponse.Member> memberList = description.members().stream().map(member -> new ConsumerGroupResponse.Member(member.consumerId(), member.clientId(), member.host())).collect(Collectors.toList());
+                List<ConsumerGroupDto.Member> memberList = description.members().stream().map(member -> new ConsumerGroupDto.Member(member.consumerId(), member.clientId(), member.host())).collect(Collectors.toList());
 
-                ConsumerGroupResponse groupResponse = new ConsumerGroupResponse();
+                ConsumerGroupDto groupResponse = new ConsumerGroupDto();
                 groupResponse.setGroupId(item.groupId());
                 groupResponse.setState(item.state().orElse(ConsumerGroupState.parse("Unknown")).name());
                 groupResponse.setMembers(memberList);
@@ -191,8 +179,6 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#listConsumerGroups:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("获取消费者组信息异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
 
     }
@@ -204,16 +190,15 @@ public class KafkaConnector {
      * @param type   类型  (broker,topic)
      * @param name   名称  (broker,topic)
      */
-    public List<ConfigResponse> describeConfigs(BrokerInfo broker, String name, ConfigResource.Type type) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
-        try {
+    public List<ConfigDto> describeConfigs(BrokerInfo broker, String name, ConfigResource.Type type) {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             ConfigResource configResource = new ConfigResource(type, name);
             DescribeConfigsResult configsResult = client.describeConfigs(Collections.singletonList(configResource));
             Map<ConfigResource, Config> configMap = configsResult.all().get(5000, TimeUnit.MILLISECONDS);
 
             return configMap.values().stream()
                     .flatMap(item -> item.entries().stream()
-                            .map(config -> new ConfigResponse(
+                            .map(config -> new ConfigDto(
                                     config.name(),
                                     config.value(),
                                     config.source(),
@@ -227,8 +212,6 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#describeConfigs:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("获取配置异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
     }
 
@@ -240,11 +223,9 @@ public class KafkaConnector {
      * @param type      类型  (broker,topic)
      * @param opType    新增修改、删除配置
      * @param configMap 配置详情
-     * @return
      */
     public void incrementalAlterConfigs(BrokerInfo broker, String name, ConfigResource.Type type, AlterConfigOp.OpType opType, Map<String, String> configMap) {
-        AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword());
-        try {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
             ConfigResource resource = new ConfigResource(type, name);
             List<AlterConfigOp> alterConfigOps = configMap.keySet().stream().map(key -> {
                 ConfigEntry configEntry = new ConfigEntry(key, configMap.get(key));
@@ -259,14 +240,11 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#incrementalAlterConfigs:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("获取配置异常:" + e.getMessage());
-        } finally {
-            client.close();
         }
     }
 
     public List<JSONObject> listTopicInfoOfConsumer(BrokerInfo brokerInfo, String groupId) {
-        AdminClient adminClient = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword());
-        try {
+        try (AdminClient adminClient = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword())) {
             //获取消费者组在各个Topic分区的偏移量信息
             Map<TopicPartition, OffsetAndMetadata> consumerGroupOffsetMap = adminClient.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata().get(5, TimeUnit.SECONDS);
 
@@ -304,8 +282,6 @@ public class KafkaConnector {
             logger.error("error: KafkaConnector#listTopicInfoOfConsumer:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
             throw new BusinessException("获取消费者主题偏移量异常:" + e.getMessage());
-        } finally {
-            adminClient.close();
         }
     }
 
@@ -327,5 +303,31 @@ public class KafkaConnector {
             props.setProperty("group.id", groupId);
         }
         return new KafkaConsumer<>(props);
+    }
+
+
+    /**
+     * 获取broker信息
+     */
+    public ClusterDto describeCluster(BrokerInfo brokerInfo) {
+        try (AdminClient client = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword())) {
+            DescribeClusterResult clusterResult = client.describeCluster();
+            String clusterId = clusterResult.clusterId().get(5, TimeUnit.SECONDS);
+            Node node = clusterResult.controller().get(5, TimeUnit.SECONDS);
+
+            Collection<Node> nodes = clusterResult.nodes().get(5, TimeUnit.SECONDS);
+            List<ClusterDto.Node> nodeList = nodes.stream().map(item -> new ClusterDto.Node(item.host(), item.port())).collect(Collectors.toList());
+
+            ClusterDto cluster = new ClusterDto();
+            cluster.setClusterId(clusterId);
+            cluster.setHost(node.host());
+            cluster.setPort(node.port());
+            cluster.setNodes(nodeList);
+            return cluster;
+        } catch (Exception e) {
+            logger.error("error: KafkaConnector#describeCluster:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("获取broker异常:" + e.getMessage());
+        }
     }
 }

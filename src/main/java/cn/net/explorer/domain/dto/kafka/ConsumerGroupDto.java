@@ -1,11 +1,11 @@
-package cn.net.explorer.domain.response.kafka;
+package cn.net.explorer.domain.dto.kafka;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class ConsumerGroupResponse {
+public class ConsumerGroupDto {
 
     /**
      * 消费者组ID
@@ -22,9 +22,9 @@ public class ConsumerGroupResponse {
      */
     private List<Member> members;
 
-    public ConsumerGroupResponse(){}
+    public ConsumerGroupDto(){}
 
-    public ConsumerGroupResponse(String groupId, String state, List<Member> members) {
+    public ConsumerGroupDto(String groupId, String state, List<Member> members) {
         this.groupId = groupId;
         this.state = state;
         this.members = members;

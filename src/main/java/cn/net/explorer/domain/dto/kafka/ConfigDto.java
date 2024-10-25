@@ -1,4 +1,4 @@
-package cn.net.explorer.domain.response.kafka;
+package cn.net.explorer.domain.dto.kafka;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ConfigResponse {
+public class ConfigDto {
 
     /**
      * 配置 key

@@ -5,8 +5,7 @@ import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.request.ValidationGroup;
 import cn.net.explorer.domain.request.kafka.TopicRequest;
 import cn.net.explorer.domain.response.ApiResponse;
-import cn.net.explorer.domain.response.kafka.TopicPartitionResponse;
-import cn.net.explorer.domain.response.kafka.TopicResponse;
+import cn.net.explorer.domain.dto.kafka.TopicDto;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
 import org.slf4j.Logger;
@@ -29,15 +28,15 @@ public class TopicController {
 
     @GetMapping("/listTopic")
     @Validated
-    public ApiResponse<List<TopicResponse>> listTopic(@RequestParam @NotEmpty String brokerId) {
+    public ApiResponse<List<TopicDto>> listTopic(@RequestParam @NotEmpty String brokerId) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
-        List<TopicResponse> topicList = kafkaConnector.listTopic(brokerInfo);
+        List<TopicDto> topicList = kafkaConnector.listTopic(brokerInfo);
         return ApiResponse.ok(topicList);
     }
 
     @GetMapping("/describeTopics")
     @Validated
-    public ApiResponse<TopicResponse> describeTopics(@RequestParam @NotEmpty String brokerId, @RequestParam @NotEmpty String topicName) {
+    public ApiResponse<TopicDto> describeTopics(@RequestParam @NotEmpty String brokerId, @RequestParam @NotEmpty String topicName) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
         return ApiResponse.ok(kafkaConnector.describeTopics(brokerInfo, topicName));
     }

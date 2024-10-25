@@ -1,4 +1,4 @@
-package cn.net.explorer.domain.response.kafka;
+package cn.net.explorer.domain.dto.kafka;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TopicResponse {
+public class TopicDto {
 
     /**
      * 主题名称
@@ -24,7 +24,7 @@ public class TopicResponse {
     /**
      * 主题所在分区信息
      */
-    List<TopicPartitionResponse> partitions;
+    List<TopicPartitionDto> partitions;
 
 
 }

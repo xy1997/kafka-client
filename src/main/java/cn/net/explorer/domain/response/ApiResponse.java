@@ -21,7 +21,7 @@ public class ApiResponse<T> {
     /**
      * 响应错误信息
      */
-    private String message;
+    private String msg;
 
     /**
      * 响应结果
@@ -38,16 +38,16 @@ public class ApiResponse<T> {
     }
 
     public static <T> ApiResponse<T> fail() {
-        return ApiResponse.<T>builder().code(HttpStatus.HTTP_INTERNAL_ERROR).message("系统异常").build();
+        return ApiResponse.<T>builder().code(HttpStatus.HTTP_INTERNAL_ERROR).msg("系统异常").build();
     }
 
     public static <T> ApiResponse<T> fail(Integer code, String description) {
-        return ApiResponse.<T>builder().code(code).message(description).build();
+        return ApiResponse.<T>builder().code(code).msg(description).build();
     }
 
 
     public static <T> ApiResponse<T> fail(String description) {
-        return ApiResponse.<T>builder().code(HttpStatus.HTTP_INTERNAL_ERROR).message(description).build();
+        return ApiResponse.<T>builder().code(HttpStatus.HTTP_INTERNAL_ERROR).msg(description).build();
     }
 
 

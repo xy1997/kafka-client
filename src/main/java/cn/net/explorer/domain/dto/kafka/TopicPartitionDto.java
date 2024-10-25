@@ -1,11 +1,11 @@
-package cn.net.explorer.domain.response.kafka;
+package cn.net.explorer.domain.dto.kafka;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class TopicPartitionResponse {
+public class TopicPartitionDto {
 
 
     /**

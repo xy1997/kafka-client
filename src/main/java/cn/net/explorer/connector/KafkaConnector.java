@@ -316,7 +316,7 @@ public class KafkaConnector {
             Node node = clusterResult.controller().get(5, TimeUnit.SECONDS);
 
             Collection<Node> nodes = clusterResult.nodes().get(5, TimeUnit.SECONDS);
-            List<ClusterDto.Node> nodeList = nodes.stream().map(item -> new ClusterDto.Node(item.host(), item.port())).collect(Collectors.toList());
+            List<ClusterDto.Node> nodeList = nodes.stream().map(item -> new ClusterDto.Node(item.host(), item.port(),(Objects.equals(node.host(),item.host()) && Objects.equals(node.port(),item.port()) ))).collect(Collectors.toList());
 
             ClusterDto cluster = new ClusterDto();
             cluster.setClusterId(clusterId);

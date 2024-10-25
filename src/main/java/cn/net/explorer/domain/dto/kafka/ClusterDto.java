@@ -23,12 +23,15 @@ public class ClusterDto {
 
         private Integer port;
 
+        private boolean controller;
+
         public Node() {
         }
 
-        public Node(String host, Integer port) {
+        public Node(String host, Integer port,boolean isController) {
             this.host = host;
             this.port = port;
+            this.controller = isController;
         }
     }
 }

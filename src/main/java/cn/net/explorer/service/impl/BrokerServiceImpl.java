@@ -31,9 +31,6 @@ import java.util.List;
 public class BrokerServiceImpl extends ServiceImpl<BrokerMapper, BrokerInfo> implements BrokerService {
     private static final Logger logger = LoggerFactory.getLogger(BrokerServiceImpl.class);
 
-    @Resource
-    private KafkaConnector kafkaConnector;
-
     @Override
     public void add(BrokerRequest brokerRequest) {
         Long count = this.lambdaQuery().eq(BrokerInfo::getName, brokerRequest.getName()).count();

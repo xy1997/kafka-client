@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -114,26 +115,17 @@ public class KafkaConnector {
 
             List<TopicPartitionDto> partitions = topicDescription.partitions().stream().map(item -> {
                 TopicPartitionDto partition = new TopicPartitionDto();
-
                 //分区号
                 partition.setPartition(item.partition());
-
                 //分区leader节点
                 Node leader = item.leader();
-                TopicPartitionDto.Node leaderNode = new TopicPartitionDto.Node(leader.id(), leader.host(), leader.port());
-                partition.setLeader(leaderNode);
+                Map<Integer, Node> isrMap = item.isr().stream().collect(Collectors.toMap(Node::id, Function.identity()));
 
                 //分区副本节点
                 List<TopicPartitionDto.Node> replicasNodes = item.replicas().stream().map(replica ->
-                        new TopicPartitionDto.Node(replica.id(), replica.host(), replica.port())
+                        new TopicPartitionDto.Node(replica.id(), replica.host(), replica.port(),isrMap.containsKey(replica.id()),Objects.equals(leader.id(), replica.id()))
                 ).collect(Collectors.toList());
                 partition.setReplicas(replicasNodes);
-
-                //分区与leader进行同步的副本节点
-                List<TopicPartitionDto.Node> isrNode = item.isr().stream().map(isr ->
-                        new TopicPartitionDto.Node(isr.id(), isr.host(), isr.port())).collect(Collectors.toList());
-                partition.setIsr(isrNode);
-
                 return partition;
             }).collect(Collectors.toList());
 

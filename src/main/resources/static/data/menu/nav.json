@@ -60,6 +60,13 @@
           "url": "cluster/index",
           "openStyle": 0,
           "icon": "icon-cluster"
+        },
+        {
+          "id": 22,
+          "name": "topic",
+          "url": "topic/index",
+          "openStyle": 0,
+          "icon": "icon-cluster"
         }
       ]
     },

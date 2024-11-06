@@ -1,11 +1,11 @@
 package cn.net.explorer.controller.kafka;
 
 import cn.net.explorer.connector.KafkaConnector;
+import cn.net.explorer.domain.dto.kafka.TopicDto;
 import cn.net.explorer.domain.eneity.BrokerInfo;
 import cn.net.explorer.domain.request.ValidationGroup;
 import cn.net.explorer.domain.request.kafka.TopicRequest;
 import cn.net.explorer.domain.response.ApiResponse;
-import cn.net.explorer.domain.dto.kafka.TopicDto;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
 import org.slf4j.Logger;
@@ -66,9 +66,9 @@ public class TopicController {
      * }
      */
     @PostMapping("/deleteTopic")
-    public ApiResponse<?> deleteTopic(@RequestBody @Validated(ValidationGroup.delete.class) TopicRequest request) {
+    public ApiResponse<?> deleteTopics(@RequestBody @Validated(ValidationGroup.delete.class) TopicRequest request) {
         BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
-        kafkaConnector.deleteTopic(brokerInfo, request.getTopicName());
+        kafkaConnector.deleteTopic(brokerInfo, request.getTopicNames());
         return ApiResponse.ok();
     }
 

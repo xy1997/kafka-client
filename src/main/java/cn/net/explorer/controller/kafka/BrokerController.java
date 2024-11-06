@@ -9,6 +9,7 @@ import cn.net.explorer.domain.response.ApiResponse;
 import cn.net.explorer.domain.dto.kafka.ClusterDto;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
+import com.sun.org.apache.regexp.internal.RE;
 import org.apache.ibatis.annotations.Delete;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,10 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/kafka/broker")
@@ -36,6 +40,18 @@ public class BrokerController {
     @GetMapping("/searchPage")
     public ApiPageResponse<?> searchPage(ClusterRequest request) {
         return ApiPageResponse.page(brokerService.searchPage(request));
+    }
+
+    @GetMapping("/loadBroker")
+    public ApiResponse<?> loadBroker() {
+        List<BrokerInfo> list = brokerService.lambdaQuery().select(BrokerInfo::getId, BrokerInfo::getName).list();
+        List<Map<String, Object>> resultList = list.stream().map(item -> {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("value", item.getId().toString());
+            resultMap.put("label", item.getName());
+            return resultMap;
+        }).collect(Collectors.toList());
+        return ApiResponse.ok(resultList);
     }
 
     @GetMapping("/detail")

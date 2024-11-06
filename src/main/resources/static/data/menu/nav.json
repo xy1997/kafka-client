@@ -64,7 +64,7 @@
         {
           "id": 22,
           "name": "topic",
-          "url": "topic/index",
+          "url": "topic/index/:id",
           "openStyle": 0,
           "icon": "icon-cluster"
         }

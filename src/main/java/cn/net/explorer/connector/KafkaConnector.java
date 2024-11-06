@@ -106,6 +106,23 @@ public class KafkaConnector {
         }
     }
 
+    /**
+     * 删除topic主题
+     *
+     * @param broker kafka服务
+     * @param topic  topic名称
+     */
+    public void deleteTopic(BrokerInfo broker, List<String> topic) {
+        try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {
+            DeleteTopicsResult topicsResult = client.deleteTopics(topic);
+            topicsResult.all().get(5000, TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+            logger.error("error: KafkaConnector#deleteTopic:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("topic删除异常:" + e.getMessage());
+        }
+    }
+
 
     public TopicDto describeTopics(BrokerInfo broker, String topic) {
         try (AdminClient client = createClient(broker.getBroker(), broker.getUsername(), broker.getPassword())) {

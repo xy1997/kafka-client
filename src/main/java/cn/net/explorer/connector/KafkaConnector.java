@@ -216,6 +216,7 @@ public class KafkaConnector {
                                     config.synonyms(),
                                     config.type(),
                                     config.documentation())))
+                    .sorted(Comparator.comparing(configDto -> configDto.getName().substring(0, 1)))
                     .collect(Collectors.toList());
         } catch (Throwable e) {
             logger.error("error: KafkaConnector#describeConfigs:{}", e.getMessage());

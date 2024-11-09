@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/kafka/topic")
@@ -25,6 +28,34 @@ public class TopicController {
     private BrokerService brokerService;
     @Resource
     private KafkaConnector kafkaConnector;
+
+    @GetMapping("/loadTopic")
+    @Validated
+    public ApiResponse<?> loadTopic(@RequestParam @NotEmpty String brokerId) {
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        List<TopicDto> topicList = kafkaConnector.listTopic(brokerInfo);
+        List<Map<String, Object>> mapList = topicList.stream().map(item -> {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("value", item.getName());
+            resultMap.put("label", item.getName());
+            return resultMap;
+        }).collect(Collectors.toList());
+        return ApiResponse.ok(mapList);
+    }
+
+    @GetMapping("/loadPartition")
+    @Validated
+    public ApiResponse<?> loadPartition(@RequestParam @NotEmpty String brokerId, @RequestParam @NotEmpty String topicName) {
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, brokerId).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        TopicDto topicDto = kafkaConnector.describeTopics(brokerInfo, topicName);
+        List<Map<String, Object>> mapList = topicDto.getPartitions().stream().map(item -> {
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("value", item.getPartition());
+            resultMap.put("label", item.getPartition());
+            return resultMap;
+        }).collect(Collectors.toList());
+        return ApiResponse.ok(mapList);
+    }
 
     @GetMapping("/listTopic")
     @Validated

@@ -55,6 +55,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
+    <logger name="org.apache.kafka.clients.consumer.internals.Fetcher" level="WARN" />
 
     <root level="info">
         <appender-ref ref="CONSOLE" />

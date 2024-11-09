@@ -1,75 +1,138 @@
 package cn.net.explorer.controller;
 
+import cn.net.explorer.connector.KafkaConnector;
+import cn.net.explorer.domain.dto.kafka.TopicDto;
+import cn.net.explorer.domain.dto.kafka.TopicPartitionDto;
+import cn.net.explorer.domain.eneity.BrokerInfo;
+import cn.net.explorer.exception.BusinessException;
+import cn.net.explorer.service.BrokerService;
 import com.alibaba.fastjson.JSON;
-import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.KafkaFuture;
-import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.config.ConfigResource;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
 public class KafkaController {
 
+    //earliest和latest
     public static void main(String[] args) throws Exception {
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", "192.168.0.71:9092");
-        props.setProperty("auto.offset.reset", "earliest");
+        props.setProperty("bootstrap.servers", "192.168.0.186:19092,192.168.0.186:29092,192.168.0.186:39092");
+        props.setProperty("auto.offset.reset", "latest");
         props.setProperty("max.partition.fetch.bytes","1048576");
         props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
 
-        TopicPartition partition0 = new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 0);
+        TopicPartition partition0 = new TopicPartition("top1-1", 0);
         List<TopicPartition> partitions = Stream.of(partition0).collect(Collectors.toList());
 
-       // consumer.assign(partitions);
-
-        Map<TopicPartition, Long> beginMap = consumer.beginningOffsets(partitions);
-        Map<TopicPartition, Long> endMap = consumer.endOffsets(partitions);
-        System.out.println(JSON.toJSONString(beginMap));
-        System.out.println(JSON.toJSONString(endMap));
+        consumer.assign(partitions);
 
 
-/*        // 不断从指定的分区中拉取消息
+       // 不断从指定的分区中拉取消息
         try {
             while (true) {
                 // 从分区中拉取消息（每次最多等待 100 毫秒）
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                 // 处理拉取到的消息
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key());
+                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key()+"; value = " + record.value());
                 }
             }
         } finally {
             // 关闭消费者
             consumer.close();
-        }*/
+        }
 
     }
 
-    public static void count() throws Exception {
-        AdminClient client = createAdminClient();
-        DescribeTopicsResult topicsResult = client.describeTopics(Stream.of("GA1400-FACE-RECORD-34020000001190000003").collect(Collectors.toList()));
-        Map<String, TopicDescription> stringTopicDescriptionMap = topicsResult.all().get();
-        System.out.println(JSON.toJSONString(stringTopicDescriptionMap));
+    @GetMapping("/pool")
+    public void pool(){
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "192.168.0.186:19092,192.168.0.186:29092,192.168.0.186:39092");
+        props.setProperty("auto.offset.reset", "earliest");
+        props.setProperty("max.partition.fetch.bytes","1048576");
+        props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
 
-        KafkaConsumer<String, String> consumer = getConsumer("GA1400-FACE-RECORD-34020000001190000003");
-        Map<TopicPartition, Long> beginOffsetsMap = consumer.beginningOffsets(Stream.of(new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 0), new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 1), new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 2)).collect(Collectors.toList()));
-        Map<TopicPartition, Long> endOffsetsMap = consumer.endOffsets(Stream.of(new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 0), new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 1), new TopicPartition("GA1400-FACE-RECORD-34020000001190000003", 2)).collect(Collectors.toList()));
+        TopicPartition partition0 = new TopicPartition("top1-1", 0);
+        List<TopicPartition> partitions = Stream.of(partition0).collect(Collectors.toList());
 
-        System.out.println("============");
-        System.out.println(JSON.toJSONString(beginOffsetsMap));
-        System.out.println("------------");
-        System.out.println(JSON.toJSONString(endOffsetsMap));
+        consumer.assign(partitions);
+
+
+        // 不断从指定的分区中拉取消息
+        try {
+            while (true) {
+                // 从分区中拉取消息（每次最多等待 100 毫秒）
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+                // 处理拉取到的消息
+                for (ConsumerRecord<String, String> record : records) {
+                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key()+"; value = " + record.value());
+                }
+            }
+        } finally {
+            // 关闭消费者
+            consumer.close();
+        }
+    }
+
+
+    @Resource
+    private KafkaConnector kafkaConnector;
+    @Resource
+    private BrokerService brokerService;
+
+    @GetMapping("/pool1")
+    public void pool1(){
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, 1).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+
+        TopicDto topicDto = kafkaConnector.describeTopics(brokerInfo, "top1-1");
+        List<TopicPartitionDto> partitionDtos = topicDto.getPartitions();
+        List<TopicPartition> partitions = partitionDtos.stream().map(item -> new TopicPartition("top1-1", item.getPartition())).collect(Collectors.toList());
+
+        Properties props = new Properties();
+        props.setProperty("bootstrap.servers", "192.168.0.186:19092,192.168.0.186:29092,192.168.0.186:39092");
+        props.setProperty("auto.offset.reset", "earliest");
+        props.setProperty("max.partition.fetch.bytes","1048576");
+        props.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+        consumer.assign(partitions);
+
+        // 不断从指定的分区中拉取消息
+        try {
+            while (true) {
+                // 从分区中拉取消息（每次最多等待 100 毫秒）
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+                // 处理拉取到的消息
+                for (ConsumerRecord<String, String> record : records) {
+                    System.out.println("=======================================");
+                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key()+"; value = " + record.value());
+                }
+            }
+        } finally {
+            // 关闭消费者
+            consumer.close();
+        }
+
+
+
+
     }
 
 
@@ -92,99 +155,5 @@ public class KafkaController {
 
         consumer.subscribe(Collections.singleton(topic));
         return consumer;
-    }
-
-
-    /**
-     * topic的config  https://blog.csdn.net/Smallc0de/article/details/109298347
-     */
-    public static void topicConfigs() throws Exception {
-        AdminClient client = createAdminClient();
-
-
-        ConfigResource configResource = new ConfigResource(ConfigResource.Type.TOPIC, "CJD-10000876-DDK");
-        DescribeConfigsResult configsResult = client.describeConfigs(Stream.of(configResource).collect(Collectors.toList()));
-
-        Map<ConfigResource, KafkaFuture<Config>> futureMap = configsResult.values();
-        Collection<KafkaFuture<Config>> values = futureMap.values();
-        for (KafkaFuture<Config> future : values) {
-            Config config = future.get();
-            Collection<ConfigEntry> entries = config.entries();
-            for (ConfigEntry ce : entries) {
-                System.out.println(ce.name() + ":" + ce.value() + "  isDefault: " + ce.isDefault());
-            }
-        }
-
-    }
-
-    /**
-     * 获取topic的分区详情
-     */
-    public static void topicInfo() throws Exception {
-        AdminClient client = createAdminClient();
-        //   DescribeTopicsResult topicsResult = client.describeTopics(Stream.of("GA1400-MOTOR-VEHICLE-34020000001190000003").collect(Collectors.toList()));
-        DescribeTopicsResult topicsResult = client.describeTopics(Stream.of("CJD-10000876-DDK").collect(Collectors.toList()));
-        Map<String, KafkaFuture<TopicDescription>> values = topicsResult.values();
-        values.values().forEach(topicDescription -> {
-            try {
-                TopicDescription td = topicDescription.get();
-
-                System.out.println("========1===========");
-                System.out.println(td);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        Map<String, TopicDescription> stringTopicDescriptionMap = topicsResult.all().get();
-        Collection<TopicDescription> values1 = stringTopicDescriptionMap.values();
-
-        System.out.println("=========2===========");
-        System.out.println(values1);
-        //partition:  主题的分区
-        //leader: 主题的分区所在的leader节点
-        //replicas: 主题的分区所在的副本节点
-        //ISR: "in-sync replicas" 的缩写，表示与当前领导者副本同步的所有副本
-    }
-
-    public static void listBrokers() throws Exception {
-        AdminClient client = createAdminClient();
-        DescribeClusterResult cluster = client.describeCluster();
-        //node是全部节点
-        Collection<Node> nodes = cluster.nodes().get();
-        //clusterID  唯一ID
-        String clusterId = cluster.clusterId().get();
-        //node是主节点
-        Node node = cluster.controller().get();
-        System.out.println("===========");
-    }
-
-    public static AdminClient createAdminClient() {
-        Properties prop = new Properties();
-        prop.setProperty(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.0.71:9092");
-        // prop.setProperty(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "150.158.45.140:19092,150.158.45.140:29092");
-        prop.setProperty(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "2000");
-        prop.setProperty(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "2000");
-/*        prop.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required username="
-                + userName + " password=" + password + ";");
-        prop.put("security.protocol", "SASL_PLAINTEXT");
-        prop.put("sasl.mechanism", "PLAIN");*/
-        return AdminClient.create(prop);
-    }
-
-    /**
-     * 列出kafka的所有TOPIC
-     */
-    public static void listTopics() throws Exception {
-        AdminClient client = createAdminClient();
-        ListTopicsOptions options = new ListTopicsOptions();
-
-        // 列出内部的Topic  __consumer_offsets是内部topic
-        options.listInternal(false);
-
-        ListTopicsResult listTopicsResult = client.listTopics(options);
-        Collection<TopicListing> topicListings = listTopicsResult.listings().get();
-
-        System.out.println("======================size: " + topicListings.size());
-        System.out.println(topicListings);
     }
 }

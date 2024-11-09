@@ -41,6 +41,6 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 server:
-  ip: 49.232.252.229
-  #ip: 127.0.0.1
+  #ip: 49.232.252.229
+  ip: 127.0.0.1
   port: 8080

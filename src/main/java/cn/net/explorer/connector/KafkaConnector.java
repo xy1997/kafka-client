@@ -59,10 +59,10 @@ public class KafkaConnector {
         } catch (Throwable e) {
             logger.error("error: KafkaConnector#listTopic:{}", e.getMessage());
             logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException(ThrowableUtil.getStackTrace(e));
         } finally {
             client.close();
         }
-        return null;
     }
 
     /**
@@ -140,7 +140,7 @@ public class KafkaConnector {
 
                 //分区副本节点
                 List<TopicPartitionDto.Node> replicasNodes = item.replicas().stream().map(replica ->
-                        new TopicPartitionDto.Node(replica.id(), replica.host(), replica.port(),isrMap.containsKey(replica.id()),Objects.equals(leader.id(), replica.id()))
+                        new TopicPartitionDto.Node(replica.id(), replica.host(), replica.port(), isrMap.containsKey(replica.id()), Objects.equals(leader.id(), replica.id()))
                 ).collect(Collectors.toList());
                 partition.setReplicas(replicasNodes);
                 return partition;
@@ -274,19 +274,21 @@ public class KafkaConnector {
             Map<TopicPartition, Long> endOffsetMap = consumer.endOffsets(topicPartitions);
 
             return topicPartitions.stream().map(topicPartition -> {
-                JSONObject result = new JSONObject();
-                //主题、分区
-                result.put("topic", topicPartition.topic());
-                result.put("partition", topicPartition.partition());
-                //当前消费者组 对分区提交的偏移量信息
-                OffsetAndMetadata offsetAndMetadata = consumerGroupOffsetMap.get(topicPartition);
-                result.put("offset", offsetAndMetadata.offset());
-                //分区的开始偏移量 和 最后偏移量
-                result.put("beginOffset", beginOffsetMap.get(topicPartition));
-                result.put("endOffset", endOffsetMap.get(topicPartition));
-                result.put("lag", endOffsetMap.get(topicPartition) - offsetAndMetadata.offset());
-                return result;
-            }).collect(Collectors.toList());
+                        JSONObject result = new JSONObject();
+                        //主题、分区
+                        result.put("topic", topicPartition.topic());
+                        result.put("partition", topicPartition.partition());
+                        //当前消费者组 对分区提交的偏移量信息
+                        OffsetAndMetadata offsetAndMetadata = consumerGroupOffsetMap.get(topicPartition);
+                        result.put("offset", offsetAndMetadata.offset());
+                        //分区的开始偏移量 和 最后偏移量
+                        result.put("beginOffset", beginOffsetMap.get(topicPartition));
+                        result.put("endOffset", endOffsetMap.get(topicPartition));
+                        result.put("lag", endOffsetMap.get(topicPartition) - offsetAndMetadata.offset());
+                        return result;
+                    })
+                    .sorted(Comparator.comparing(item -> item.getString("topic")))
+                    .collect(Collectors.toList());
 
         } catch (Exception e) {
             logger.error("error: KafkaConnector#listTopicInfoOfConsumer:{}", e.getMessage());
@@ -326,7 +328,7 @@ public class KafkaConnector {
             Node node = clusterResult.controller().get(5, TimeUnit.SECONDS);
 
             Collection<Node> nodes = clusterResult.nodes().get(5, TimeUnit.SECONDS);
-            List<ClusterDto.Node> nodeList = nodes.stream().map(item -> new ClusterDto.Node(item.host(), item.port(),(Objects.equals(node.host(),item.host()) && Objects.equals(node.port(),item.port()) ))).collect(Collectors.toList());
+            List<ClusterDto.Node> nodeList = nodes.stream().map(item -> new ClusterDto.Node(item.host(), item.port(), (Objects.equals(node.host(), item.host()) && Objects.equals(node.port(), item.port())))).collect(Collectors.toList());
 
             ClusterDto cluster = new ClusterDto();
             cluster.setClusterId(clusterId);

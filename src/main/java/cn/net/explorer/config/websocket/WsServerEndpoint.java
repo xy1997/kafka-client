@@ -1,5 +1,6 @@
 package cn.net.explorer.config.websocket;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.net.explorer.connector.KafkaConnector;
 import cn.net.explorer.domain.dto.kafka.TopicDto;
@@ -46,6 +47,7 @@ public class WsServerEndpoint {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("offset") String offset, @PathParam("brokerId") Integer brokerId, @PathParam("topicName") String topicName, @PathParam("partition") Integer partition) {
+        logger.info("线程ID: {}",Thread.currentThread().getId());
         String mapKey = String.format(MAP_FORMAT_KEY, brokerId, topicName, partition);
         logger.info("[websocket]=======websocket  onOpen ==========");
         if (Objects.isNull(brokerId) || StringUtils.isEmpty(topicName)) {
@@ -60,15 +62,21 @@ public class WsServerEndpoint {
             logger.info("[websocket]:准备关闭旧会话,sessionId:{} - Replaced by new session", existingSession.getId());
             closeSession(existingSession, brokerId, topicName, partition, "Replaced by new session");
         }
+        SESSION_MAP.forEach((key,value) ->{
+            logger.info("MAP-KEY: {}, MAP-VALUE: {}",key,value.getId());
+        });
+        consumer(session.getId(),brokerId,topicName,partition,offset);
 
-        consumer(brokerId,topicName,partition,offset);
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("offset") String offset, @PathParam("brokerId") Integer brokerId, @PathParam("topicName") String topicName, @PathParam("partition") Integer partition) {
         String mapKey = String.format(MAP_FORMAT_KEY, brokerId, topicName, partition);
         logger.info("[websocket]:sessionId:{},offset:{},brokerId:{},topicName:{},partition:{},MAP_SIZE:{}=======websocket  onClose ==========", session.getId(), offset, brokerId, topicName, partition, SESSION_MAP.size());
-        SESSION_MAP.remove(mapKey);
+        List<Session> sessionList = SESSION_MAP.values().stream().filter(item -> Objects.equals(item.getId(), session.getId())).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(sessionList)){
+            SESSION_MAP.remove(mapKey);
+        }
     }
 
     @OnMessage
@@ -104,7 +112,7 @@ public class WsServerEndpoint {
     /**
      * partition = -1 代表全部分区
      */
-    public void consumer(Integer brokerId, String topicName, Integer partition, String offset) {
+    public void consumer(String sessionId,Integer brokerId, String topicName, Integer partition, String offset) {
         BrokerService brokerService = SpringUtil.getBean(BrokerService.class);
         KafkaConnector kafkaConnector = SpringUtil.getBean(KafkaConnector.class);
 
@@ -126,14 +134,18 @@ public class WsServerEndpoint {
         //保存websocket中的seesion  map key
         String mapKey = String.format(MAP_FORMAT_KEY, brokerId, topicName, partition);
         try {
-            while (true) {
+            while (CollUtil.isNotEmpty(SESSION_MAP.values().stream().filter(item -> Objects.equals(item.getId(),sessionId)).collect(Collectors.toList()))) {
                 // 从分区中拉取消息（每次最多等待 100 毫秒）
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                 // 处理拉取到的消息
                 for (ConsumerRecord<String, String> record : records) {
                     System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key() + "; value = " + record.value());
                     Session session = SESSION_MAP.get(mapKey);
-                    session.getAsyncRemote().sendText(record.value());
+                    try {
+                        session.getBasicRemote().sendText(record.value());
+                    }catch (Exception e){
+                        logger.error("[websocket]发送消息异常, mapKey: {}, exception: {}", mapKey, ThrowableUtil.getStackTrace(e));
+                    }
                 }
             }
         } finally {

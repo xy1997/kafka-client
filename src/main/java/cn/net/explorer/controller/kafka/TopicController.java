@@ -8,6 +8,7 @@ import cn.net.explorer.domain.request.kafka.TopicRequest;
 import cn.net.explorer.domain.response.ApiResponse;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.service.BrokerService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +19,7 @@ import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -103,5 +105,22 @@ public class TopicController {
         return ApiResponse.ok();
     }
 
+    @PostMapping("/createPartitions")
+    public ApiResponse<?> createPartitions(@RequestBody TopicRequest request) {
+        if (Objects.isNull(request.getBrokerId()) || StringUtils.isEmpty(request.getTopicName()) || Objects.isNull(request.getPartition()))
+            throw new BusinessException("参数异常");
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        kafkaConnector.createPartitions(brokerInfo, request.getTopicName(), request.getPartition());
+        return ApiResponse.ok();
+    }
+
+    @PostMapping("/alterPartitionReassignments")
+    public ApiResponse<?> alterPartitionReassignments(@RequestBody TopicRequest request) {
+        if (Objects.isNull(request.getBrokerId()) || StringUtils.isEmpty(request.getTopicName()) || Objects.isNull(request.getReplication()))
+            throw new BusinessException("参数异常");
+        BrokerInfo brokerInfo = brokerService.lambdaQuery().eq(BrokerInfo::getId, request.getBrokerId()).oneOpt().orElseThrow(() -> new BusinessException("数据异常"));
+        kafkaConnector.alterPartitionReassignments(brokerInfo, request.getTopicName(), request.getReplication());
+        return ApiResponse.ok();
+    }
 
 }

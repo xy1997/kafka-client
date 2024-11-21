@@ -7,7 +7,7 @@
       "name": "kafka",
       "url": null,
       "openStyle": 0,
-      "icon": "icon-setting",
+      "icon": "icon-link",
       "children": [
         {
           "id": 21,
@@ -21,22 +21,27 @@
           "name": "topic",
           "url": "topic/index/:id",
           "openStyle": 0,
-          "icon": "icon-cluster"
+          "icon": "icon-bell"
         },
         {
           "id": 23,
           "name": "consumer",
           "url": "consumer/index/:id",
           "openStyle": 0,
-          "icon": "icon-cluster"
+          "icon": "icon-user"
         },{
           "id": 24,
-          "name": "offset-pool",
-          "url": "consumer/consumer-pool",
+          "name": "poll",
+          "url": "consumer/consumer-poll",
           "openStyle": 0,
-          "icon": "icon-cluster"
-        }
-      ]
+          "icon": "icon-fullscreen"
+        },{
+          "id": 25,
+          "name": "push",
+          "url": "producer/producer-push",
+          "openStyle": 0,
+          "icon": "icon-plus"
+        } ]
     }
   ]
 }

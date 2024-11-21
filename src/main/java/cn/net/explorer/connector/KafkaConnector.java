@@ -1,9 +1,10 @@
 package cn.net.explorer.connector;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.net.explorer.domain.dto.kafka.*;
 import cn.net.explorer.domain.eneity.BrokerInfo;
-import cn.net.explorer.domain.response.kafka.*;
 import cn.net.explorer.exception.BusinessException;
 import cn.net.explorer.util.ThrowableUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -11,15 +12,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -317,6 +324,37 @@ public class KafkaConnector {
         return new KafkaConsumer<>(props);
     }
 
+    /**
+     * 创建生产者
+     */
+    private Producer<String, String> createProducer(BrokerInfo brokerInfo, String username, String password) {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", brokerInfo.getBroker());
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        if (ObjectUtil.isAllNotEmpty(username, password)) {
+            props.put("sasl.jaas.config", "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"" + username + "\" password=\"" + password + "\";");
+            props.put("security.protocol", "SASL_PLAINTEXT");
+            props.put("sasl.mechanism", "PLAIN");
+        }
+        return new KafkaProducer<>(props);
+    }
+
+    /**
+     * 推送kafka消息
+     */
+    public void sendMessage(BrokerInfo brokerInfo, String topic, Integer partition, String message) {
+        try (Producer<String, String> producer = createProducer(brokerInfo, brokerInfo.getUsername(), brokerInfo.getPassword())) {
+            ProducerRecord<String, String> record = new ProducerRecord<>(topic, partition, null, message);
+            RecordMetadata metadata = producer.send(record).get();
+            logger.info("======send: topic:{},partition:{},with offset:{}", metadata.topic(), metadata.partition(), metadata.offset());
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("error: KafkaConnector#sendMessage:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("推送kafka消息异常:" + e.getMessage());
+        }
+    }
 
     /**
      * 获取broker信息
@@ -342,4 +380,71 @@ public class KafkaConnector {
             throw new BusinessException("获取broker异常:" + e.getMessage());
         }
     }
+
+    /**
+     * 扩容分区
+     *
+     * @param brokerInfo        broker信息
+     * @param topicName         topic名称
+     * @param newPartitionCount 新分区数量
+     */
+    public void createPartitions(BrokerInfo brokerInfo, String topicName, int newPartitionCount) {
+        try (AdminClient client = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword())) {
+
+            // 创建分区扩容请求
+            Map<String, NewPartitions> newPartitionsMap = Collections.singletonMap(
+                    topicName, NewPartitions.increaseTo(newPartitionCount)
+            );
+            // 执行扩容操作
+            client.createPartitions(newPartitionsMap).all().get();
+        } catch (Exception e) {
+            logger.error("error: KafkaConnector#createPartitions:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("修改分区数异常:" + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 重新分配副本
+     * @param brokerInfo broker信息
+     * @param topicName 主题名称
+     * @param desiredReplicationFactor 期望的副本数量
+     */
+    public void alterPartitionReassignments(BrokerInfo brokerInfo, String topicName, int desiredReplicationFactor) {
+        try (AdminClient adminClient = createClient(brokerInfo.getBroker(), brokerInfo.getUsername(), brokerInfo.getPassword())) {
+
+            // 获取当前集群的 Broker 列表
+            Collection<Node> brokers = adminClient.describeCluster().nodes().get();
+            List<Integer> brokerIds = brokers.stream().map(Node::id).collect(Collectors.toList());
+            if(CollUtil.isEmpty(brokerIds)) throw new BusinessException("broker 为空");
+            if(brokerIds.size() < desiredReplicationFactor) throw new BusinessException("副本数量不可大于可用broker:"+brokerIds.size());
+
+            // 获取主题分区信息
+            TopicDescription topicDescription = adminClient.describeTopics(Collections.singletonList(topicName))
+                    .all().get().get(topicName);
+
+            // 构建新的副本分配
+            Map<TopicPartition, Optional<NewPartitionReassignment>> reassignmentMap = new HashMap<>();
+            for (TopicPartitionInfo partitionInfo : topicDescription.partitions()) {
+                int partition = partitionInfo.partition();
+                // 按循环方式分配 Broker
+                List<Integer> newReplicas = new ArrayList<>();
+                for (int i = 0; i < desiredReplicationFactor; i++) {
+                    newReplicas.add(brokerIds.get((partition + i) % brokerIds.size()));
+                }
+                reassignmentMap.put(
+                        new TopicPartition(topicName, partition),
+                        Optional.of(new NewPartitionReassignment(newReplicas))
+                );
+            }
+            // 提交重新分配请求
+            adminClient.alterPartitionReassignments(reassignmentMap).all().get();
+        }catch (Exception e){
+            logger.error("error: KafkaConnector#alterPartitionReassignments:{}", e.getMessage());
+            logger.error(ThrowableUtil.getStackTrace(e));
+            throw new BusinessException("修改副本数异常:" + e.getMessage());
+        }
+    }
+
 }

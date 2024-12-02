@@ -8,7 +8,31 @@
 - 发送消息到 Kafka 主题
 - 从 Kafka 主题接收消息
 - 支持指定 Kafka 服务器和主题
-- 提供简单的命令行界面（CLI）
 
 ## 项目结构
-kafka-client-tool/ │ ├── src/ │ ├── main/ │ │ ├── java/ │ │ │ └── com/ │ │ │ └── example/ │ │ │ └── kafka/ │ │ │ ├── KafkaProducer.java │ │ │ ├── KafkaConsumer.java │ │ │ └── KafkaClient.java │ │ └── resources/ │ │ └── application.properties │ ├── pom.xml ├── README.md └── LICENSE
+offset-explorer/
+│ 
+├── src/
+│   ├── main/ 
+│   │   ├── java/
+│   │   │   └── cn/ 
+│   │   │       └── net/
+│   │   │           └── explorer/
+│   │   │               ├── config
+│   │   │               ├── connector
+│   │   │               └── controller
+│   │   │               └── domain
+│   │   │               └── exception
+│   │   │               └── mapper
+│   │   │               └── service
+│   │   │               └── util
+│   │   │               └── ExplorerApplication.java
+│   │   └── resources/
+│   │       └── db
+│   │       └── mapper
+│   │       └── application.yml
+│   │       └── logback-spring.xml
+│
+├── .gitignore
+├── pom.xml
+├── README.md

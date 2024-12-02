@@ -10,4 +10,28 @@
 - 支持指定 Kafka 服务器和主题
 
 ## 项目结构
-offset-explorer/ │ ├── src/ │ ├── main/ │ │ ├── java/ │ │ │ └── cn/ │ │ │ └── net/ │ │ │ └── explorer/ │ │ │ ├── config │ │ │ ├── connector │ │ │ └── controller │ │ │ └── domain │ │ │ └── exception │ │ │ └── mapper │ │ │ └── service │ │ │ └── util │ │ │ └── ExplorerApplication.java │ │ └── resources/ │ │ └── db │ │ └── mapper │ │ └── application.yml │ │ └── logback-spring.xml │ ├── .gitignore ├── pom.xml ├── README.md
+    offset-explorer/
+    │ 
+    ├── src/
+    │   ├── main/ 
+    │   │   ├── java/
+    │   │   │   └── cn/ 
+    │   │   │       └── net/
+    │   │   │           └── explorer/
+    │   │   │               ├── config
+    │   │   │               ├── connector
+    │   │   │               └── controller
+    │   │   │               └── domain
+    │   │   │               └── exception
+    │   │   │               └── mapper
+    │   │   │               └── service
+    │   │   │               └── util
+    │   │   │               └── ExplorerApplication.java
+    │   └── resources/
+    │       └── db
+    │       └── mapper
+    │       └── application.yml
+    │       └── logback-spring.xml
+    ├── .gitignore
+    ├── pom.xml
+    ├── README.md

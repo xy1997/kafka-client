@@ -58,8 +58,16 @@ sa-token:
   is-log: false
   # 登录完成时， 是否向浏览器set-cookie
   is-read-cookie: true
-  default-username: admin
-  default-password: admin
+
+
+logging:
+  level:
+    root: info
+    cn.net.explorer.mapper: error
+    org:
+      springframework:
+        web: info
+      hibernate: ERROR
 
 security:
   ignore:

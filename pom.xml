@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.net.explorer</groupId>
-    <artifactId>offset-explorer</artifactId>
+    <artifactId>kafka-client</artifactId>
     <version>1.0</version>
 
     <properties>

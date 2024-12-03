@@ -81,11 +81,9 @@ public class WsServerEndpoint {
 
     @OnMessage
     public void onMessage(String message, Session session, @PathParam("offset") String offset, @PathParam("brokerId") Integer brokerId, @PathParam("topicName") String topicName, @PathParam("partition") Integer partition) {
-        System.out.println("brokerId: " + brokerId + " topicName: " + topicName + " partition: " + partition);
         logger.info("[websocket]:sessionId:{}=======websocket  onMessage ==========", session.getId());
 
         String mapKey = String.format(MAP_FORMAT_KEY, 1, "top1-1", 1);
-        System.out.println("即将向: " + mapKey + "发送数据");
         Session se = SESSION_MAP.get(mapKey);
 
         se.getAsyncRemote().sendText(message);
@@ -139,7 +137,6 @@ public class WsServerEndpoint {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
                 // 处理拉取到的消息
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("topic = " + record.topic() + ", partition = " + record.partition() + ", Offset = " + record.offset() + ", Key = " + record.key() + "; value = " + record.value());
                     Session session = SESSION_MAP.get(mapKey);
                     try {
                         session.getBasicRemote().sendText(record.value());

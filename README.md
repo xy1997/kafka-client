@@ -40,7 +40,7 @@
      docker pull crpi-uf6um9mal0ofi1in.cn-beijing.personal.cr.aliyuncs.com/min_tool/kafka-client:1.0.0
 
     #运行容器
-    docker run -itd -p 8080:8080 -p 80:80 --name kafka-client -v /data/kafka-client/:/app/db/  -e ENV_USERNAME=admin -e ENV_PASSWORD=123456 kafka-client
+    docker run -itd -p 8080:8080 -p 80:80 --name kafka-client -v /data/kafka-client/:/app/db/  -e ENV_USERNAME=admin -e ENV_PASSWORD=123456 kafka-client:1.0.0
    
     #**注**： _/app/db/ 目录下是sqlite文件，ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 

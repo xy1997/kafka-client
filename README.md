@@ -41,6 +41,6 @@
 
     #运行容器
     docker run -itd -p 8080:8080 -p 80:80 --name kafka-client -v /data/kafka-client/:/app/db/  -e ENV_USERNAME=admin -e ENV_PASSWORD=123456 kafka-client
-    
-    
+   
+    > **备注**: 这是一个备注
 

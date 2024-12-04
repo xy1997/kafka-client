@@ -42,5 +42,5 @@
     #运行容器
     docker run -itd -p 8080:8080 -p 80:80 --name kafka-client -v /data/kafka-client/:/app/db/  -e ENV_USERNAME=admin -e ENV_PASSWORD=123456 kafka-client
    
-   <!-- 这是一个备注 -->
+  **注**： _/app/db/ 目录下是sqlite文件，ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 

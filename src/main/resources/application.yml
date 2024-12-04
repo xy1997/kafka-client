@@ -2,6 +2,7 @@ spring:
   datasource:
     driver-class-name: org.sqlite.JDBC
     url: jdbc:sqlite::resource:db/explorer.db
+    #url: jdbc:sqlite:/app/db/explorer.db
     druid:
       # 初始化连接池个数
       initial-size: 5

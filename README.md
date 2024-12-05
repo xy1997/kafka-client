@@ -49,6 +49,9 @@
    
     #**注**： ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 
+## 演示环境地址
+   [http://49.232.252.229/](http://)
+
 ## 系统界面
  **cluster** 
 ![输入图片说明](cluster.jpg)

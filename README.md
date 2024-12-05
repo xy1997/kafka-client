@@ -74,4 +74,3 @@
 ## github
     [https://github.com/xy1997/kafka-client](http://)
 
-    [https://github.com/xy1997/kafka-client-web](http://)

@@ -72,5 +72,5 @@
    [前端代码]( https://gitee.com/xingyusix/kafka-client-web)
 
 ## github代码
-    [前端代码]( https://github.com/xy1997/kafka-client-web)
-    [后端代码]( https://github.com/xy1997/kafka-client)
+    [前端代码](https://github.com/xy1997/kafka-client-web)
+    [后端代码](https://github.com/xy1997/kafka-client)

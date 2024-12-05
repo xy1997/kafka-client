@@ -1,3 +1,4 @@
+
 # Kafka Client Tool
 
 该项目提供了一个简单易用的 Kafka 客户端工具，用于连接 Kafka 集群，发送和接收消息。旨在帮助开发者快速集成 Kafka 客户端操作，进行生产环境或测试环境的数据处理。
@@ -11,7 +12,7 @@
 - 支持修改topic的分区数以及分区副本数.
 - 支持消费指定topic消息
 - 支持向指定topic推送消息
-......
+- ......
 
 ## 项目结构
     offset-explorer/
@@ -49,4 +50,10 @@
     #**注**： ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 
 ## 系统界面
+![输入图片说明](image.png)
+
+![输入图片说明](image.png)
+
+![输入图片说明](image.png)
+
 ![输入图片说明](image.png)

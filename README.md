@@ -15,7 +15,7 @@
 - . . . . . .
 
 ## 项目结构
-    offset-explorer/
+    kafka-client/
     │ 
     ├── src/
     │   ├── main/ 

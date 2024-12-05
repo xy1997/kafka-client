@@ -12,7 +12,7 @@
 - 支持修改topic的分区数以及分区副本数.
 - 支持消费指定topic消息
 - 支持向指定topic推送消息
-- ......
+- . . . . . .
 
 ## 项目结构
     offset-explorer/
@@ -45,7 +45,7 @@
      docker pull crpi-uf6um9mal0ofi1in.cn-beijing.personal.cr.aliyuncs.com/min_tool/kafka-client:1.0.0
 
     #运行容器
-    docker run -itd -p 8080:8080 -p 80:80 --name kafka-client  -e ENV_USERNAME=admin -e ENV_PASSWORD=123456 crpi-uf6um9mal0ofi1in.cn-beijing.personal.cr.aliyuncs.com/min_tool/kafka-client:1.0.0
+    docker run -itd -p 8080:8080 -p 80:80 --name kafka-client  -e ENV_USERNAME=admin -e ENV_PASSWORD=admin crpi-uf6um9mal0ofi1in.cn-beijing.personal.cr.aliyuncs.com/min_tool/kafka-client:1.0.0
    
     #**注**： ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 
@@ -69,8 +69,8 @@
 ![输入图片说明](push.jpg)
 
 ## 前端代码
-    # https://gitee.com/xingyusix/kafka-client-web.git
+   [ https://gitee.com/xingyusix/kafka-client-web](http://)
 
 ## github
-    # https://github.com/xy1997/kafka-client.git
-    # https://github.com/xy1997/kafka-client-web.git
+    [https://github.com/xy1997/kafka-client](http://)
+    [https://github.com/xy1997/kafka-client-web](http://)

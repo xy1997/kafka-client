@@ -50,12 +50,24 @@
     #**注**： ENV_USERNAME、ENV_PASSWORD为系统登录用户和密码
 
 ## 系统界面
+ **cluster** 
 ![输入图片说明](cluster.jpg)
 
+ **topic** 
 ![输入图片说明](topic.jpg)
 
+ **consumer** 
 ![输入图片说明](consumer.jpg)
 
+ **poll** 
 ![输入图片说明](poll.jpg)
 
+ **push** 
 ![输入图片说明](push.jpg)
+
+## 前端代码
+    # https://gitee.com/xingyusix/kafka-client-web.git
+
+## github
+    # https://github.com/xy1997/kafka-client.git
+    # https://github.com/xy1997/kafka-client-web.git
